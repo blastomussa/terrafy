@@ -1,6 +1,6 @@
 # Terrafy
 
-The goal of this project is to extract valid Terraform variables from Azure ARM deployment templates. Takes a `paramerters.json` and a `template.json` file as arguments and outputs valid `variables.tf` and `terraform.tfvars` files. Eventually, I might try to tackle automating the creation of Terraform resource blocks by parsing the template.json file into AzureRM and AzApi provider resources.
+The goal of this project is to extract valid Terraform variables from Azure ARM deployment templates. Takes a `paramerters.json` and a `template.json` file as arguments and outputs valid `variables.tf` and `terraform.tfvars` files. Eventually, I might try to tackle automating the creation of Terraform resource blocks by parsing the template.json file into AzureRM and/or AzApi provider resources.
 
 ## Usage
 ```
