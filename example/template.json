@@ -1,0 +1,758 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "type": "String"
+        },
+        "name": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        },
+        "hostingPlanName": {
+            "type": "String"
+        },
+        "serverFarmResourceGroup": {
+            "type": "String"
+        },
+        "ftpsState": {
+            "type": "String"
+        },
+        "sku": {
+            "type": "String"
+        },
+        "skuCode": {
+            "type": "String"
+        },
+        "workerSize": {
+            "type": "String"
+        },
+        "workerSizeId": {
+            "type": "String"
+        },
+        "numberOfWorkers": {
+            "type": "String"
+        },
+        "kind": {
+            "type": "String"
+        },
+        "reserved": {
+            "type": "Bool"
+        },
+        "alwaysOn": {
+            "type": "Bool"
+        },
+        "linuxFxVersion": {
+            "type": "String"
+        },
+        "dockerRegistryUrl": {
+            "type": "String"
+        },
+        "storageSizeGB": {
+            "type": "Int"
+        },
+        "storageIops": {
+            "type": "Int"
+        },
+        "storageAutoGrow": {
+            "type": "String"
+        },
+        "storageAutoIoScaling": {
+            "type": "String"
+        },
+        "backupRetentionDays": {
+            "type": "Int"
+        },
+        "geoRedundantBackup": {
+            "type": "String"
+        },
+        "charset": {
+            "type": "String"
+        },
+        "collation": {
+            "type": "String"
+        },
+        "vmName": {
+            "type": "String"
+        },
+        "serverEdition": {
+            "type": "String"
+        },
+        "vCores": {
+            "type": "Int"
+        },
+        "serverName": {
+            "type": "String"
+        },
+        "serverUsername": {
+            "type": "String"
+        },
+        "serverPassword": {
+            "type": "SecureString"
+        },
+        "databaseName": {
+            "type": "String"
+        },
+        "publicNetworkAccess": {
+            "type": "String"
+        },
+        "wordpressTitle": {
+            "type": "String"
+        },
+        "wordpressAdminEmail": {
+            "type": "String"
+        },
+        "wordpressUsername": {
+            "type": "String"
+        },
+        "wordpressPassword": {
+            "type": "SecureString"
+        },
+        "wpLocaleCode": {
+            "type": "String"
+        },
+        "cdnProfileName": {
+            "type": "String"
+        },
+        "cdnEndpointName": {
+            "type": "String"
+        },
+        "cdnType": {
+            "type": "String"
+        },
+        "storageAccountName": {
+            "type": "String"
+        },
+        "storageAccountType": {
+            "type": "String"
+        },
+        "storageAccountKind": {
+            "type": "String"
+        },
+        "accessTier": {
+            "type": "String"
+        },
+        "minimumTlsVersion": {
+            "type": "String"
+        },
+        "supportsHttpsTrafficOnly": {
+            "type": "Bool"
+        },
+        "allowBlobPublicAccess": {
+            "type": "Bool"
+        },
+        "allowSharedKeyAccess": {
+            "type": "Bool"
+        },
+        "allowCrossTenantReplication": {
+            "type": "Bool"
+        },
+        "networkAclsBypass": {
+            "type": "String"
+        },
+        "networkAclsDefaultAction": {
+            "type": "String"
+        },
+        "keySource": {
+            "type": "String"
+        },
+        "encryptionEnabled": {
+            "type": "Bool"
+        },
+        "infrastructureEncryptionEnabled": {
+            "type": "Bool"
+        },
+        "blobContainerName": {
+            "type": "String"
+        },
+        "blobPublicAccessLevel": {
+            "type": "String"
+        },
+        "vnetName": {
+            "type": "String"
+        },
+        "subnetForApp": {
+            "type": "String"
+        },
+        "subnetForDb": {
+            "type": "String"
+        },
+        "privateDnsZoneNameForDb": {
+            "type": "String"
+        },
+        "vnetrg": {
+            "type": "String"
+        }
+    },
+    "variables": {
+        "appServicesApiVersion": "2021-03-01",
+        "databaseApiVersion": "2021-12-01-preview",
+        "databaseVersion": "5.7",
+        "vnetDeploymentApiVersion": "2020-07-01",
+        "privateDnsApiVersion": "2018-09-01",
+        "privateEndpointApiVersion": "2021-03-01",
+        "vnetAddress": "10.0.0.0/16",
+        "cdnApiVersion": "2020-04-15",
+        "blobApiVersion": "2021-08-01",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "[variables('appServicesApiVersion')]",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                "[concat('Microsoft.DBforMySQL/flexibleServers/', parameters('serverName'))]",
+                "[concat('Microsoft.DBforMySQL/flexibleServers/', parameters('serverName'), '/databases/', parameters('databaseName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('blobContainerName'))]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "properties": {
+                "name": "[parameters('name')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "DOCKER_REGISTRY_SERVER_URL",
+                            "value": "[parameters('dockerRegistryUrl')]"
+                        },
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "true"
+                        },
+                        {
+                            "name": "DATABASE_HOST",
+                            "value": "[concat(parameters('serverName'),'.mysql.database.azure.com')]"
+                        },
+                        {
+                            "name": "DATABASE_NAME",
+                            "value": "[parameters('databaseName')]"
+                        },
+                        {
+                            "name": "DATABASE_USERNAME",
+                            "value": "[parameters('serverUsername')]"
+                        },
+                        {
+                            "name": "DATABASE_PASSWORD",
+                            "value": "[parameters('serverPassword')]"
+                        },
+                        {
+                            "name": "WORDPRESS_ADMIN_EMAIL",
+                            "value": "[parameters('wordpressAdminEmail')]"
+                        },
+                        {
+                            "name": "WORDPRESS_ADMIN_USER",
+                            "value": "[parameters('wordpressUsername')]"
+                        },
+                        {
+                            "name": "WORDPRESS_ADMIN_PASSWORD",
+                            "value": "[parameters('wordpressPassword')]"
+                        },
+                        {
+                            "name": "WORDPRESS_TITLE",
+                            "value": "[parameters('wordpressTitle')]"
+                        },
+                        {
+                            "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
+                            "value": "1800"
+                        },
+                        {
+                            "name": "WORDPRESS_LOCALE_CODE",
+                            "value": "[parameters('wpLocaleCode')]"
+                        },
+                        {
+                            "name": "SETUP_PHPMYADMIN",
+                            "value": "true"
+                        },
+                        {
+                            "name": "WORDPRESS_LOCAL_STORAGE_CACHE_ENABLED",
+                            "value": "true"
+                        },
+                        {
+                            "name": "CDN_ENABLED",
+                            "value": "true"
+                        },
+                        {
+                            "name": "CDN_ENDPOINT",
+                            "value": "[concat(parameters('cdnEndPointName'),'.azureedge.net')]"
+                        },
+                        {
+                            "name": "BLOB_STORAGE_ENABLED",
+                            "value": "true"
+                        },
+                        {
+                            "name": "STORAGE_ACCOUNT_NAME",
+                            "value": "[parameters('storageAccountName')]"
+                        },
+                        {
+                            "name": "BLOB_CONTAINER_NAME",
+                            "value": "[parameters('blobContainerName')]"
+                        },
+                        {
+                            "name": "STORAGE_ACCOUNT_KEY",
+                            "value": "[listKeys(variables('storageAccountId'), '2019-04-01').keys[0].value]"
+                        },
+                        {
+                            "name": "BLOB_STORAGE_URL",
+                            "value": "[concat(parameters('storageAccountName'),'.blob.core.windows.net')]"
+                        }
+                    ],
+                    "connectionStrings": [],
+                    "ftpsState": "[parameters('ftpsState')]",
+                    "linuxFxVersion": "[parameters('linuxFxVersion')]",
+                    "vnetRouteAllEnabled": true
+                },
+                "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                "clientAffinityEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "[variables('appServicesApiVersion')]",
+            "name": "[parameters('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            },
+            "kind": "[parameters('kind')]",
+            "properties": {
+                "name": "[parameters('hostingPlanName')]",
+                "workerSize": "[parameters('workerSize')]",
+                "workerSizeId": "[parameters('workerSizeId')]",
+                "numberOfWorkers": "[parameters('numberOfWorkers')]",
+                "reserved": "[parameters('reserved')]"
+            }
+        },
+        {
+            "type": "Microsoft.DBforMySQL/flexibleServers/",
+            "apiVersion": "[variables('databaseApiVersion')]",
+            "name": "[parameters('serverName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('privateDnsZoneNameForDb'), format('{0}-vnetlink', parameters('privateDnsZoneNameForDb')))]",
+                "[resourceId(parameters('vnetrg'),'Microsoft.Resources/deployments', 'subnet_Resources')]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "sku": {
+                "name": "[parameters('vmName')]",
+                "tier": "[parameters('serverEdition')]",
+                "capacity": "[parameters('vCores')]"
+            },
+            "properties": {
+                "version": "[variables('databaseVersion')]",
+                "administratorLogin": "[parameters('serverUsername')]",
+                "administratorLoginPassword": "[parameters('serverPassword')]",
+                "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+                "Storage": {
+                    "StorageSizeGB": "[parameters('storageSizeGB')]",
+                    "Iops": "[parameters('storageIops')]",
+                    "Autogrow": "[parameters('storageAutoGrow')]",
+                    "AutoIoScaling": "[parameters('storageAutoIoScaling')]"
+                },
+                "Backup": {
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                },
+                "Network": {
+                    "PrivateDnsZoneResourceId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneNameForDb'))]",
+                    "DelegatedSubnetResourceId": "[resourceId(parameters('vnetrg'),'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetForDb'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DBforMySQL/flexibleServers/databases",
+            "apiVersion": "[variables('databaseApiVersion')]",
+            "name": "[format('{0}/{1}', parameters('serverName'), parameters('databaseName') )]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+            ],
+            "properties": {
+                "charset": "[parameters('charset')]",
+                "collation": "[parameters('collation')]"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "subnet_Resources",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.1",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2021-03-01",
+                            "name": "[format('{0}/{1}', parameters('vnetName'), parameters('subnetForApp'))]",
+                            "properties": {
+                                "addressPrefix": "10.0.2.0/24",
+                                "delegations": [
+                                    {
+                                        "name": "dlg-appService",
+                                        "properties": {
+                                            "serviceName": "Microsoft.Web/serverFarms"
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2021-03-01",
+                            "name": "[format('{0}/{1}',parameters('vnetName'), parameters('subnetForDb'))]",
+                            "properties": {
+                                "addressPrefix": "10.0.5.0/24",
+                                "delegations": [
+                                    {
+                                        "name": "dlg-appService",
+                                        "properties": {
+                                            "serviceName": "Microsoft.DBforMySQL/flexibleServers"
+                                        }
+                                    }
+                                ]
+                            },
+                            "dependsOn": [
+                                "[resourceId(parameters('vnetrg'),'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetForApp'))]"
+                            ]
+                        }
+                    ]
+                }
+            },
+            "subscriptionId": "e40760a7-bc88-4c05-ab1c-52bbaa77271a",
+            "resourceGroup": "sandbox-shared-services-rg"
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "[variables('privateDnsApiVersion')]",
+            "name": "[parameters('privateDnsZoneNameForDb')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId(parameters('vnetrg'),'Microsoft.Resources/deployments', 'subnet_Resources')]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "resources": [
+                {
+                    "type": "virtualNetworkLinks",
+                    "apiVersion": "[variables('privateDnsApiVersion')]",
+                    "name": "[format('{0}-vnetlink', parameters('privateDnsZoneNameForDb'))]",
+                    "location": "global",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneNameForDb'))]"
+                    ],
+                    "properties": {
+                        "virtualNetwork": {
+                            "id": "[resourceId(parameters('vnetrg'),'Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+                        },
+                        "registrationEnabled": false
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/networkConfig",
+            "apiVersion": "[variables('appServicesApiVersion')]",
+            "name": "[format('{0}/{1}', parameters('name'), 'virtualNetwork')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', parameters('name'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('privateDnsZoneNameForDb'), format('{0}-vnetlink', parameters('privateDnsZoneNameForDb')))]"
+            ],
+            "properties": {
+                "subnetResourceId": "[resourceId(parameters('vnetrg'),'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetForApp'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "[variables('appServicesApiVersion')]",
+            "name": "[concat(parameters('name'), '/web')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', parameters('name'))]",
+                "[resourceId('Microsoft.Web/sites/networkConfig', parameters('name'), 'virtualNetwork')]"
+            ],
+            "properties": {
+                "alwaysOn": "[parameters('alwaysOn')]"
+            }
+        },
+        {
+            "type": "Microsoft.Cdn/profiles",
+            "apiVersion": "[variables('cdnApiVersion')]",
+            "name": "[parameters('cdnProfileName')]",
+            "location": "Global",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "sku": {
+                "name": "[parameters('cdnType')]"
+            },
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Cdn/profiles/endpoints",
+            "apiVersion": "[variables('cdnApiVersion')]",
+            "name": "[concat(parameters('cdnProfileName'),'/',parameters('cdnEndPointName'))]",
+            "location": "Global",
+            "dependsOn": [
+                "[concat('Microsoft.Cdn/profiles/', parameters('cdnProfileName'))]",
+                "[resourceId('Microsoft.Web/Sites', parameters('name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('blobContainerName'))]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "properties": {
+                "isHttpAllowed": true,
+                "isHttpsAllowed": true,
+                "isCompressionEnabled": true,
+                "contentTypesToCompress": [
+                    "application/eot",
+                    "application/font",
+                    "application/font-sfnt",
+                    "application/javascript",
+                    "application/json",
+                    "application/opentype",
+                    "application/otf",
+                    "application/pkcs7-mime",
+                    "application/truetype",
+                    "application/ttf",
+                    "application/vnd.ms-fontobject",
+                    "application/xhtml+xml",
+                    "application/xml",
+                    "application/xml+rss",
+                    "application/x-font-opentype",
+                    "application/x-font-truetype",
+                    "application/x-font-ttf",
+                    "application/x-httpd-cgi",
+                    "application/x-javascript",
+                    "application/x-mpegurl",
+                    "application/x-opentype",
+                    "application/x-otf",
+                    "application/x-perl",
+                    "application/x-ttf",
+                    "font/eot",
+                    "font/ttf",
+                    "font/otf",
+                    "font/opentype",
+                    "image/svg+xml",
+                    "text/css",
+                    "text/csv",
+                    "text/html",
+                    "text/javascript",
+                    "text/js",
+                    "text/plain",
+                    "text/richtext",
+                    "text/tab-separated-values",
+                    "text/xml",
+                    "text/x-script",
+                    "text/x-component",
+                    "text/x-java-source"
+                ],
+                "origins": [
+                    {
+                        "name": "umwwpdemo-azurewebsites-net",
+                        "properties": {
+                            "hostName": "umwwpdemo.azurewebsites.net",
+                            "httpPort": 80,
+                            "httpsPort": 443,
+                            "originHostHeader": "umwwpdemo.azurewebsites.net",
+                            "priority": 1,
+                            "weight": 1000,
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "umwwpdemocb81444cb7-blob-core-windows-net",
+                        "properties": {
+                            "hostName": "umwwpdemocb81444cb7.blob.core.windows.net",
+                            "httpPort": 80,
+                            "httpsPort": 443,
+                            "originHostHeader": "umwwpdemocb81444cb7.blob.core.windows.net",
+                            "priority": 1,
+                            "weight": 1000,
+                            "enabled": true
+                        }
+                    }
+                ],
+                "originGroups": [
+                    {
+                        "name": "blob-origin-group",
+                        "properties": {
+                            "origins": [
+                                {
+                                    "id": "[resourceId('Microsoft.Cdn/profiles/endpoints/origins', parameters('cdnProfileName'), parameters('cdnEndPointName'), 'umwwpdemocb81444cb7-blob-core-windows-net')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "app-origin-group",
+                        "properties": {
+                            "origins": [
+                                {
+                                    "id": "[resourceId('Microsoft.Cdn/profiles/endpoints/origins', parameters('cdnProfileName'), parameters('cdnEndPointName'), 'umwwpdemo-azurewebsites-net')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "defaultOriginGroup": {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/endpoints/originGroups', parameters('cdnProfileName'), parameters('cdnEndPointName'), 'blob-origin-group')]"
+                },
+                "geoFilters": [],
+                "deliveryPolicy": {
+                    "rules": [
+                        {
+                            "name": "originOverrideRule",
+                            "order": 1,
+                            "conditions": [
+                                {
+                                    "name": "UrlPath",
+                                    "parameters": {
+                                        "typeName": "DeliveryRuleUrlPathMatchConditionParameters",
+                                        "operator": "BeginsWith",
+                                        "negateCondition": true,
+                                        "matchValues": [
+                                            "[concat(parameters('blobContainerName'), '/wp-content/uploads/')]"
+                                        ],
+                                        "transforms": [
+                                            "Lowercase"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "name": "OriginGroupOverride",
+                                    "parameters": {
+                                        "typeName": "DeliveryRuleOriginGroupOverrideActionParameters",
+                                        "originGroup": {
+                                            "id": "[resourceId('Microsoft.Cdn/profiles/endpoints/originGroups', parameters('cdnProfileName'), parameters('cdnEndPointName'), 'app-origin-group')]"
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "UrlRewrite",
+                                    "parameters": {
+                                        "typeName": "DeliveryRuleUrlRewriteActionParameters",
+                                        "sourcePattern": "[concat('/', parameters('blobContainerName'), '/')]",
+                                        "destination": "/",
+                                        "preserveUnmatchedPath": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('blobApiVersion')]",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+            ],
+            "tags": {
+                "AppProfile": "Wordpress"
+            },
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "[parameters('storageAccountKind')]",
+            "properties": {
+                "accessTier": "[parameters('accessTier')]",
+                "minimumTlsVersion": "[parameters('minimumTlsVersion')]",
+                "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
+                "allowBlobPublicAccess": "[parameters('allowBlobPublicAccess')]",
+                "allowSharedKeyAccess": "[parameters('allowSharedKeyAccess')]",
+                "allowCrossTenantReplication": "[parameters('allowCrossTenantReplication')]",
+                "networkAcls": {
+                    "bypass": "[parameters('networkAclsBypass')]",
+                    "defaultAction": "[parameters('networkAclsDefaultAction')]",
+                    "ipRules": []
+                },
+                "encryption": {
+                    "keySource": "[parameters('keySource')]",
+                    "services": {
+                        "blob": {
+                            "enabled": "[parameters('encryptionEnabled')]"
+                        },
+                        "file": {
+                            "enabled": "[parameters('encryptionEnabled')]"
+                        },
+                        "table": {
+                            "enabled": "[parameters('encryptionEnabled')]"
+                        },
+                        "queue": {
+                            "enabled": "[parameters('encryptionEnabled')]"
+                        }
+                    },
+                    "requireInfrastructureEncryption": "[parameters('infrastructureEncryptionEnabled')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "[variables('blobApiVersion')]",
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "restorePolicy": {
+                    "enabled": false
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 7
+                },
+                "containerDeleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 7
+                },
+                "changeFeed": {
+                    "enabled": false
+                },
+                "isVersioningEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "[variables('blobApiVersion')]",
+            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('blobContainerName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "immutableStorageWithVersioning": {
+                    "enabled": false
+                },
+                "metadata": {},
+                "publicAccess": "[parameters('blobPublicAccessLevel')]"
+            }
+        }
+    ]
+}
