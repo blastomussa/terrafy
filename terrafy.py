@@ -73,7 +73,7 @@ class Terrafy():
         Long, messy sed command pipe that formats the json files into valid Terraform variable blocks.
         """
         if self.args.verbose: print("Creating variables.tf file...")
-        command = "cat " + self.tmp_vars + " | sed 's/\(\"type\":\) \"\([^\"]*\)\"/\\1 \\2/g' | sed  '1d;$d' | sed 's/\":/\"/g' | tr -d ',' | sed 's/^[[:space:]]*//' | sed 's/\"type\"/type =/g' | sed 's/\"sensitive\"/sensitive =/g' | sed '/^\"/s/^/variable /' | sed '/^type/s/^/description = \"\"\\n/' | sed '/^type/s/^/default = \{\}\\n/' > " + self.working_dir + "/variables.tf"
+        command = "cat " + self.tmp_vars + " | sed 's/\(\"type\":\) \"\([^\"]*\)\"/\\1 \\2/g' | sed  '1d;$d' | sed 's/\":/\"/g' | tr -d ',' | sed 's/^[[:space:]]*//' | sed 's/\"type\"/type =/g' | sed 's/\"sensitive\"/sensitive =/g' | sed '/^\"/s/^/variable /' | sed '/^type/s/^/description = \"\"\\n/' > " + self.working_dir + "/variables.tf"
         if self.args.verbose: print("Running command: {}".format(command))
         output = subprocess.check_output(command, shell=True, text=True)
         if self.args.verbose:
